@@ -2,6 +2,8 @@
 from . import db 
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import login_manager
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from . import db 
 
 class Role(db.Model):
 	__tablename__='roles'
@@ -20,6 +22,7 @@ class User(db.Model):
 	username = db.Column(db.String(64), unique=True, index=True)
 	role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
 	password_hash = db.Column(db.String(128))
+	confirmed = db.Column(db.Boolean, default=False)
 	
 	@property 
 	def password(self):
@@ -34,6 +37,17 @@ class User(db.Model):
 		
 	def __repr__(self):
 		return '<User %r>' % self.username 
+	def confirm(self, token):	
+		s = Serializer(current_app.config['SECRET_KEY'])
+		try:
+			data = s.loads(token)
+		except:
+			return False 
+		if data.get('confirm') != self.id:
+			return False 
+		self.confirmed = True 
+		db.session.add(self)
+		return True 
 		
 @login_manager.user_loader
 def load_user(user_id):
