@@ -1,9 +1,10 @@
 # -*- coding:utf-8 -*-
+from flask import current_app
 from . import db 
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import login_manager
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
-from . import db 
+from flask.ext.login import UserMixin
 
 class Role(db.Model):
 	__tablename__='roles'
@@ -15,7 +16,7 @@ class Role(db.Model):
 	def __repr__(self):
 		return '<Role %r>' % self.name
 		
-class User(db.Model):
+class User(UserMixin,db.Model):
 	__tablename__='users'
 	id = db.Column(db.Integer, primary_key=True)
 	email = db.Column(db.String(64), unique=True, index=True)
@@ -33,7 +34,10 @@ class User(db.Model):
 		self.password_hash = generate_password_hash(password)
 		
 	def verify_password(self, password):
-		return checkout_password_hash(self.password_hash, password)
+		return check_password_hash(self.password_hash, password)
+	def generate_confirmation_token(self, expiration=3600):
+		s = Serializer(current_app.config['SECRET_KEY'], expiration)
+		return s.dumps({'confirm':self.id})
 		
 	def __repr__(self):
 		return '<User %r>' % self.username 
