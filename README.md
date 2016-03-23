@@ -1,4 +1,4 @@
-Blog
+Blog by python,flask
 ======
 
 This repository contains the source and notes which I learn from the book <<flask web development>>
